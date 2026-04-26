@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<meta name="theme-color" content="#fff5e0" />
+<title>割り勘計算</title>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+P+One&family=Kosugi+Maru&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box}html,body{margin:0;padding:0;height:100%;overflow:hidden}
+body{font-family:"Kosugi Maru",system-ui,sans-serif;color:#3a2a1c;background:linear-gradient(180deg,#fff5e0,#ffd56b);touch-action:manipulation;user-select:none;-webkit-tap-highlight-color:transparent}
+#app{display:flex;flex-direction:column;height:100dvh;padding:14px;gap:10px;max-width:480px;margin:0 auto}
+.title{font-family:"Mochiy Pop P One",sans-serif;font-size:24px;color:#ff6b35;-webkit-text-stroke:2.5px #fff;paint-order:stroke fill;text-shadow:3px 3px 0 #3a2a1c;text-align:center;margin:6px 0}
+.card{background:#fff;border:3px solid #3a2a1c;border-radius:14px;padding:14px;box-shadow:3px 3px 0 #3a2a1c;display:flex;flex-direction:column;gap:8px}
+.card label{font-size:11px;font-weight:bold;color:#ff6b35}
+.card input{background:#fff5e0;border:2px solid #3a2a1c;border-radius:8px;padding:10px;font-size:18px;font-family:inherit;width:100%}
+.row{display:flex;gap:8px;align-items:center}
+.row .stepper{display:flex;align-items:center;gap:4px;flex:1}
+.stepper button{background:#ff6b35;color:#fff;border:2px solid #3a2a1c;width:36px;height:36px;border-radius:8px;font-size:18px;font-weight:900;font-family:inherit;cursor:pointer}
+.stepper input{flex:1;text-align:center}
+.options{display:flex;gap:6px;flex-wrap:wrap}
+.options button{flex:1;background:#fff;border:2px solid #3a2a1c;padding:8px;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;min-width:60px}
+.options button.on{background:#ff6b35;color:#fff}
+.result{flex:1;background:#fff;border:3px solid #3a2a1c;border-radius:18px;padding:18px;box-shadow:4px 4px 0 #3a2a1c;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
+.result .big{font-family:"Mochiy Pop P One",sans-serif;font-size:48px;text-align:center;color:#ff6b35;line-height:1}
+.result .lbl{font-size:11px;text-align:center;opacity:.7}
+.result .row2{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-top:1px dashed #ffd56b}
+.result .row2:first-of-type{border-top:0}
+.result .lead{margin-top:auto;background:#ffd56b;border:2px dashed #3a2a1c;border-radius:10px;padding:10px;font-size:12px;line-height:1.6}
+.result .lead b{color:#d93a1a;font-weight:900}
+</style>
+</head>
+<body>
+<div id="app">
+<h1 class="title">割り勘計算 💴</h1>
+<div class="card">
+  <label>合計金額</label>
+  <input type="number" id="amount" inputmode="numeric" placeholder="例: 12500" />
+  <label>人数</label>
+  <div class="row">
+    <div class="stepper">
+      <button id="m">−</button>
+      <input type="number" id="people" value="2" inputmode="numeric"/>
+      <button id="p">＋</button>
+    </div>
+  </div>
+  <label>端数の処理</label>
+  <div class="options" id="rounds">
+    <button data-r="100" class="on">100円単位</button>
+    <button data-r="500">500円単位</button>
+    <button data-r="1000">1000円</button>
+    <button data-r="0">そのまま</button>
+  </div>
+  <label>幹事は多めに払う？</label>
+  <div class="options" id="leads">
+    <button data-l="0" class="on">均等</button>
+    <button data-l="500">+500</button>
+    <button data-l="1000">+1000</button>
+    <button data-l="2000">+2000</button>
+  </div>
+</div>
+<div class="result">
+  <div class="lbl">1人あたり</div>
+  <div class="big">¥ <span id="each">—</span></div>
+  <div class="row2"><span>合計</span><span id="r-total">—</span></div>
+  <div class="row2"><span>人数</span><span id="r-people">—</span></div>
+  <div class="row2"><span>1人</span><span id="r-each">—</span></div>
+  <div class="row2"><span>幹事</span><span id="r-lead">—</span></div>
+  <div class="lead" id="ld">幹事おつ！</div>
+</div>
+</div>
+<script>
+(()=>{
+'use strict';
+const $=(id)=>document.getElementById(id);
+let round=100,leadExtra=0;
+function calc(){
+  const amt=parseInt($('amount').value)||0;
+  const n=Math.max(1,parseInt($('people').value)||1);
+  if(amt<=0||n<=0){$('each').textContent='—';return}
+  const remain=amt-leadExtra;
+  let each;
+  if(round===0)each=Math.ceil(remain/n);
+  else each=Math.ceil(remain/n/round)*round;
+  const total=each*n+leadExtra;
+  const lead=each+leadExtra;
+  $('each').textContent=each.toLocaleString();
+  $('r-total').textContent='¥'+amt.toLocaleString();
+  $('r-people').textContent=n+'人';
+  $('r-each').textContent='¥'+each.toLocaleString();
+  $('r-lead').textContent='¥'+lead.toLocaleString();
+  const diff=total-amt;
+  const ld=$('ld');while(ld.firstChild)ld.removeChild(ld.firstChild);
+  if(diff>=0){
+    ld.appendChild(document.createTextNode('余り '));
+    const b=document.createElement('b');b.textContent='+¥'+diff.toLocaleString();ld.appendChild(b);
+    ld.appendChild(document.createTextNode(' は幹事のお小遣い 😎'));
+  }else{
+    ld.appendChild(document.createTextNode('不足 '));
+    const b=document.createElement('b');b.textContent='−¥'+Math.abs(diff).toLocaleString();ld.appendChild(b);
+    ld.appendChild(document.createTextNode('（幹事カード切り）'));
+  }
+}
+$('amount').addEventListener('input',calc);
+$('people').addEventListener('input',calc);
+$('m').addEventListener('click',()=>{const e=$('people');e.value=Math.max(1,parseInt(e.value)-1);calc()});
+$('p').addEventListener('click',()=>{const e=$('people');e.value=parseInt(e.value)+1;calc()});
+document.querySelectorAll('#rounds button').forEach(b=>b.addEventListener('click',()=>{
+  round=parseInt(b.dataset.r);
+  document.querySelectorAll('#rounds button').forEach(x=>x.classList.toggle('on',x===b));calc()}));
+document.querySelectorAll('#leads button').forEach(b=>b.addEventListener('click',()=>{
+  leadExtra=parseInt(b.dataset.l);
+  document.querySelectorAll('#leads button').forEach(x=>x.classList.toggle('on',x===b));calc()}));
+calc();
+})();
+</script>
+</body>
+</html>
